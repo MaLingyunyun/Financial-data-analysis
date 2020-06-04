@@ -1,0 +1,22 @@
+import numpy as np
+import matplotlib.pyplot as plt
+plt.rcParams['font.sans-serif'] = ['SimHei'] # 用来正常显示中文标签
+
+dp_rate = 0.015 # 2015 年 10 月人民银行发布的 1 年期存款利率
+rates = [0.046, 0.05, 0.054] # 2、4、6年贷款利率
+loan_pv = 100 # 单位：万元
+loan_nper = [2, 4, 6] # 单位：年
+repay_pmt = np.zeros(len(loan_nper)) # 按揭月供金额
+repay_fv = np.zeros(len(loan_nper)) # 实际还款未来终值
+for n in range(len(loan_nper)):
+    repay_pmt[n] = round(np.pmt(rates[n]/12, loan_nper[n]*12, loan_pv)*10000, 2)
+    repay_fv[n] = round(np.fv(dp_rate/12, loan_nper[n]*12, repay_pmt[n], 0), 2)
+
+fig, ax = plt.subplots(figsize = (9,6))
+ax.plot(loan_nper, np.round(repay_fv/10000, 2), marker=  'o', label = '不同还款年限的按揭终值')
+ax.set(xticks = loan_nper, xlabel = '还款年限', ylabel = '100 万按揭终值')
+for i in range(len(loan_nper)):
+    ax.text(loan_nper[i], np.round(repay_fv/10000, 2)[i], 
+             np.round(repay_fv/10000, 2)[i], ha='left', fontsize=20)
+ax.legend()
+plt.show()
