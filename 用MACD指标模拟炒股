@@ -1,0 +1,54 @@
+import numpy as np
+import datetime
+import pandas_datareader.data as web
+
+start = datetime.datetime(2018, 6, 1)
+end = datetime.datetime.today()
+stock_name = '601318.ss'
+df = web.DataReader(stock_name, 'yahoo', start, end)
+
+def df_EMA(prices, N):
+    ema = []
+    k = len(prices)
+    if k > 0:
+        for i in range(k):
+            if i == 0:
+                ema.append(prices[i])
+            else:
+                ema.append((2 * prices[i] + (N - 1) * ema[i - 1]) / (N + 1))
+    return (ema)
+
+def df_MACD(df, short=12, long=26, M=9):
+    fast = df_EMA(df['Adj Close'].values, short)
+    slow = df_EMA(df['Adj Close'].values, long)
+    if len(fast) > 0:  # & len(slow)>0:
+        df['Fast'] = np.round(np.array(fast), 2)
+        df['Slow'] = np.round(np.array(slow), 2)
+        df['DIF'] = df['Fast'] - df['Slow']
+        df['DEA'] = np.round(np.array(df_EMA(df['DIF'].values, M)), 2)
+        df['MACD'] = 2 * (df['DIF'] - df['DEA'])
+        df['tim'] = df['Close']/df['Open']
+        return (df)
+    else:
+        print('no data,no MACD')
+
+times0 = 1
+marker = 0
+df_MACD(df, 12, 26, 9)
+for i in df.itertuples(index=True, name='df'):
+    if getattr(i,'DIF') > 0 and marker == 0:
+        times0 = times0 * getattr(i,'tim')
+        marker = 1
+    elif getattr(i,'DIF') > 0 and marker == 1:
+        times0 = times0 * getattr(i,'tim')
+        marker = 1
+    elif getattr(i,'DIF') == 0 and marker == 1:
+        times0 = times0 * getattr(i,'tim')
+        marker = 0
+    elif getattr(i,'DIF') < 0 and marker == 1:
+        times0 = times0 * getattr(i,'tim')
+        marker = 0
+    else:
+        continue
+
+print(times0)
